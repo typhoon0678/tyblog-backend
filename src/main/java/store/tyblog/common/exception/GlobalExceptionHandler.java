@@ -12,14 +12,19 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     protected ResponseEntity<Object> handleUserAlreadyExistsException(UserAlreadyExistsException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                new ExceptionResponse<>(e.getMessage())
-        );
+        ExceptionResponse<?> exceptionResponse = ExceptionResponse.builder()
+                .message(e.getMessage())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exceptionResponse);
     }
 
     @ExceptionHandler(OAuth2UserAlreadyException.class)
     protected ResponseEntity<Object> handleUserAlreadyException(OAuth2UserAlreadyException e) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                new ExceptionResponse<>(e.getMessage()));
+        ExceptionResponse<?> exceptionResponse = ExceptionResponse.builder()
+                .message(e.getMessage())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(exceptionResponse);
     }
 }

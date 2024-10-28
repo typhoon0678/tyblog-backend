@@ -12,8 +12,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import store.tyblog.common.jwt.TokenProvider;
+import store.tyblog.common.oauth.CustomOAuth2User;
 import store.tyblog.dto.member.MemberLoginRequestDto;
 import store.tyblog.dto.member.MemberSignupRequestDto;
+import store.tyblog.dto.member.MemberTokenResponseDto;
 import store.tyblog.service.MemberService;
 
 import java.util.Map;
@@ -57,5 +59,12 @@ public class MemberController {
     public ResponseEntity<?> saveMember(@Valid @RequestBody MemberSignupRequestDto memberSignupRequestDto) {
         memberService.signup(memberSignupRequestDto);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/token")
+    public ResponseEntity<MemberTokenResponseDto> checkToken() {
+        MemberTokenResponseDto memberTokenResponseDto = memberService.getMemberInfo();
+
+        return ResponseEntity.ok().body(memberTokenResponseDto);
     }
 }
