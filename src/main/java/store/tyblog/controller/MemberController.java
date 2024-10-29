@@ -67,4 +67,11 @@ public class MemberController {
 
         return ResponseEntity.ok().body(memberTokenResponseDto);
     }
+
+    @GetMapping("/username")
+    public ResponseEntity<MemberTokenResponseDto> getUsername() {
+        MemberTokenResponseDto memberTokenResponseDto = memberService.getUsername();
+
+        return ResponseEntity.ok().body(memberTokenResponseDto);
+    }
 }

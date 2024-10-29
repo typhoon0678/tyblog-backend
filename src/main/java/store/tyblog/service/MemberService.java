@@ -16,6 +16,7 @@ import store.tyblog.enums.Role;
 import store.tyblog.repository.MemberRepository;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -59,6 +60,24 @@ public class MemberService {
             return MemberTokenResponseDto.builder()
                     .email(email)
                     .roles(roles)
+                    .build();
+        }
+
+        return new MemberTokenResponseDto();
+    }
+
+    public MemberTokenResponseDto getUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication.getPrincipal() instanceof UserDetails userDetails) {
+            String email = userDetails.getUsername();
+            String username = memberRepository.findByEmail(email)
+                    .orElseThrow(() -> new NoSuchElementException("회원 정보가 없습니다."))
+                    .getUsername();
+
+            return MemberTokenResponseDto.builder()
+                    .email(email)
+                    .username(username)
                     .build();
         }
 
