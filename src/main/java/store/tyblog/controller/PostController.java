@@ -26,19 +26,26 @@ public class PostController {
     private final PostService postService;
     private final S3Util s3Util;
 
+
     @PostMapping
     public ResponseEntity<?> create(@RequestBody PostRequestDto postRequestDto) {
         postService.create(postRequestDto);
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/{username}")
+    @GetMapping("/{id}")
+    public ResponseEntity<PostResponseDto> getPost(@PathVariable Long id) {
+        return ResponseEntity.ok().body(postService.getPost(id));
+    }
+
+    @GetMapping("/member/{username}")
     public ResponseEntity<Page<PostResponseDto>> getPosts(
             @PathVariable String username,
+            @RequestParam long categoryId,
             @RequestParam int page,
             @RequestParam int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt", "id").descending());
-        Page<PostResponseDto> postPage = postService.getPosts(username, pageable);
+        Page<PostResponseDto> postPage = postService.getPosts(username, categoryId, pageable);
         return ResponseEntity.ok().body(postPage);
     }
 

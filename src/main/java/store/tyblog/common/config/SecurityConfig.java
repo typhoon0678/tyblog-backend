@@ -3,6 +3,7 @@ package store.tyblog.common.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -43,10 +44,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
+        String[] memberApi = {};
+        String[] postApi = {"/api/post", "/api/post/image"};
+        String[] categoryApi = {"/api/category"};
+
         http
                 .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-//                        .requestMatchers("/swagger-ui/**").hasRole("ADMIN")
+                        .requestMatchers(memberApi).authenticated()
+                        .requestMatchers(postApi).authenticated()
+                        .requestMatchers(categoryApi).authenticated()
                         .anyRequest().permitAll()
                 )
 

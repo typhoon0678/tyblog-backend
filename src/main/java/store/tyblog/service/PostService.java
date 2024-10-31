@@ -44,17 +44,36 @@ public class PostService {
         postRepository.save(post);
     }
 
-    public Page<PostResponseDto> getPosts(String username, Pageable pageable) {
+    public PostResponseDto getPost(Long id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("해당 게시글이 없습니다."));
+
+        return new PostResponseDto(post);
+    }
+
+    public Page<PostResponseDto> getPosts(String username, long categoryId, Pageable pageable) {
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new NoSuchElementException("회원 정보가 없습니다."));
 
-        Page<Post> postPage = postRepository.findByMemberAndIsDeletedFalse(member, pageable);
+        Page<Post> postPage;
+
+        if (categoryId == 0L) {
+            postPage = postRepository.findByMemberAndIsDeletedFalse(member, pageable);
+        } else {
+            Category category = Category.builder()
+                    .id(categoryId)
+                    .build();
+
+            postPage = postRepository.findByMemberAndCategoriesEqualsAndIsDeletedFalse(
+                    member, category, pageable);
+        }
+
 
         return postPage.map(PostResponseDto::new);
     }
 
     public Page<PostResponseDto> getRecentPosts(Pageable pageable) {
-        Page<Post> postPage = postRepository.findAll(pageable);
+        Page<Post> postPage = postRepository.findAllByIsDeletedFalse(pageable);
         return postPage.map(PostResponseDto::new);
     }
 }

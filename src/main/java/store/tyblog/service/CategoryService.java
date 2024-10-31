@@ -38,4 +38,13 @@ public class CategoryService {
         List<Category> categories = categoryRepository.findByMemberAndIsDeletedFalse(member);
         return categories.stream().map(CategoryResponseDto::new).toList();
     }
+
+
+    public List<CategoryResponseDto> getCategoriesByUsername(String username) {
+        Member member = memberRepository.findByUsername(username)
+                .orElseThrow(() -> new NoSuchElementException("회원정보가 없습니다."));
+
+        List<Category> categories = categoryRepository.findByMemberAndIsDeletedFalse(member);
+        return categories.stream().map(CategoryResponseDto::new).toList();
+    }
 }
