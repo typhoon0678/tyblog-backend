@@ -1,18 +1,17 @@
 package store.tyblog.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import store.tyblog.common.jwt.TokenProvider;
-import store.tyblog.common.oauth.CustomOAuth2User;
 import store.tyblog.dto.member.MemberLoginRequestDto;
 import store.tyblog.dto.member.MemberSignupRequestDto;
 import store.tyblog.dto.member.MemberTokenResponseDto;
@@ -62,8 +61,16 @@ public class MemberController {
     }
 
     @GetMapping("/token")
+    @Operation(summary = "토큰 확인 API", description = "API 요청에 포함된 토큰이 유효한지 확인 후, 회원 정보를 return")
     public ResponseEntity<MemberTokenResponseDto> checkToken() {
         MemberTokenResponseDto memberTokenResponseDto = memberService.getMemberInfo();
+
+        return ResponseEntity.ok().body(memberTokenResponseDto);
+    }
+
+    @GetMapping("/username")
+    public ResponseEntity<MemberTokenResponseDto> getUsername() {
+        MemberTokenResponseDto memberTokenResponseDto = memberService.getUsername();
 
         return ResponseEntity.ok().body(memberTokenResponseDto);
     }
