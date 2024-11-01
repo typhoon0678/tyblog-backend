@@ -63,7 +63,8 @@ public class TokenProvider implements InitializingBean {
                 .domain(domain)
                 .path("/")
                 .httpOnly(true)
-//                .secure(true) // https 에서만 쿠키 전송
+                .sameSite("None")
+                .secure(true)
                 .maxAge(tokenValidityInSeconds)
                 .build();
     }
@@ -76,7 +77,8 @@ public class TokenProvider implements InitializingBean {
                 .domain(domain)
                 .path("/")
                 .httpOnly(true)
-//                .secure(true) // https 에서만 쿠키 전송
+                .sameSite("None")
+                .secure(true)
                 .maxAge(0)
                 .build();
 
