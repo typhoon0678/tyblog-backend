@@ -21,9 +21,12 @@ public class CustomOAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHa
     private final TokenProvider tokenProvider;
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+            Authentication authentication) throws IOException {
 
-        response.addCookie(tokenProvider.getAccessServletCookie(authentication));
+        response.addHeader("access", tokenProvider.getJwt("access", authentication));
+
+        response.addCookie(tokenProvider.getRefreshServletCookie(authentication));
 
         response.sendRedirect(clientUrl);
     }

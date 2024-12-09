@@ -23,75 +23,81 @@ public class TokenProvider implements InitializingBean {
 
     private static final String AUTHORITIES_KEY = "auth";
     private final String secret;
-    private final long tokenValidityInSeconds;
-    private final long tokenValidityInMilliseconds;
+    private final long accessValidityInMilliseconds;
+    private final long refreshValidityInSeconds;
+    private final long refreshValidityInMilliseconds;
     private SecretKey secretKey;
     private final String domain;
 
     public TokenProvider(
             @Value("${jwt.secret}") String secret,
-            @Value("${jwt.token-validity-in-seconds}") long tokenValidityInSeconds,
+            @Value("${jwt.expired.access}") long accessValidityInSeconds,
+            @Value("${jwt.expired.refresh}") long refreshValidityInSeconds,
             @Value("${jwt.domain}") String domain) {
         this.secret = secret;
-        this.tokenValidityInSeconds = tokenValidityInSeconds;
-        this.tokenValidityInMilliseconds = tokenValidityInSeconds * 1000;
+        this.accessValidityInMilliseconds = accessValidityInSeconds * 1000;
+        this.refreshValidityInSeconds = refreshValidityInSeconds;
+        this.refreshValidityInMilliseconds = refreshValidityInSeconds * 1000;
         this.domain = domain;
     }
 
     @Override
     public void afterPropertiesSet() {
-        this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS512.key().build().getAlgorithm());
+        this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8),
+                Jwts.SIG.HS512.key().build().getAlgorithm());
     }
 
-    public ResponseCookie getAccessToken(Authentication authentication) {
+    public String getJwt(String category, Authentication authentication) {
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
 
         long now = (new Date()).getTime();
-        Date validity = new Date(now + this.tokenValidityInMilliseconds);
 
-        String jwt = Jwts.builder()
+        long tokenValidityInMilliseconds = 0L;
+        if (category.equals("access")) {
+            tokenValidityInMilliseconds = this.accessValidityInMilliseconds;
+        } else if (category.equals("refresh")) {
+            tokenValidityInMilliseconds = this.refreshValidityInMilliseconds;
+        }
+        Date validity = new Date(now + tokenValidityInMilliseconds);
+
+        return Jwts.builder()
                 .subject(authentication.getName())
+                .claim("category", category)
                 .claim(AUTHORITIES_KEY, authorities)
                 .signWith(secretKey)
                 .expiration(validity)
                 .compact();
+    }
 
-        return ResponseCookie.from("accessToken")
+    public ResponseCookie getRefreshToken(Authentication authentication) {
+
+        String jwt = getJwt("refresh", authentication);
+
+        return ResponseCookie.from("refresh")
                 .value(jwt)
                 .domain(domain)
                 .path("/")
                 .httpOnly(true)
-                .sameSite("None")
-                .secure(true)
-                .maxAge(tokenValidityInSeconds)
+                // .secure(true) // https 에서만 쿠키 전송
+                .maxAge(refreshValidityInSeconds)
                 .build();
     }
 
     public Map<String, ResponseCookie> getLogoutToken() {
         Map<String, ResponseCookie> resultMap = new HashMap<>();
 
-        ResponseCookie accessTokenCookie = ResponseCookie.from("accessToken")
+        ResponseCookie refreshTokenCookie = ResponseCookie.from("refresh")
                 .value("")
                 .domain(domain)
                 .path("/")
                 .httpOnly(true)
-                .sameSite("None")
-                .secure(true)
+                // .secure(true) // https 에서만 쿠키 전송
                 .maxAge(0)
                 .build();
 
-        ResponseCookie loginCookie =
-                ResponseCookie.from("login")
-                        .value(UUID.randomUUID().toString())
-                        .domain(domain)
-                        .path("/")
-                        .maxAge(0)
-                        .build();
-
-        resultMap.put("accessToken", accessTokenCookie);
-        resultMap.put("login", loginCookie);
+        resultMap.put("refresh", refreshTokenCookie);
 
         return resultMap;
     }
@@ -104,10 +110,10 @@ public class TokenProvider implements InitializingBean {
                 .parseSignedClaims(token)
                 .getPayload();
 
-        Collection<? extends GrantedAuthority> authorities =
-                Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(","))
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
+        Collection<? extends GrantedAuthority> authorities = Arrays
+                .stream(claims.get(AUTHORITIES_KEY).toString().split(","))
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
 
         User principal = new User(claims.getSubject(), "", authorities);
 
@@ -123,9 +129,9 @@ public class TokenProvider implements InitializingBean {
         return false;
     }
 
-    public Cookie getAccessServletCookie(Authentication authentication) {
+    public Cookie getRefreshServletCookie(Authentication authentication) {
 
-        return toServletCookie(getAccessToken(authentication));
+        return toServletCookie(getRefreshToken(authentication));
     }
 
     private Cookie toServletCookie(ResponseCookie responseCookie) {

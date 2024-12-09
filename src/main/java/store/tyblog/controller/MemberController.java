@@ -31,26 +31,28 @@ public class MemberController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody MemberLoginRequestDto memberLoginRequestDto) {
 
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(memberLoginRequestDto.getEmail(), memberLoginRequestDto.getPassword());
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                memberLoginRequestDto.getEmail(), memberLoginRequestDto.getPassword());
 
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        ResponseCookie accessToken = tokenProvider.getAccessToken(authentication);
+        String accessJwt = tokenProvider.getJwt("access", authentication);
+        ResponseCookie refreshToken = tokenProvider.getRefreshToken(authentication);
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessToken.toString())
+                .header("access", accessJwt)
+                .header(HttpHeaders.SET_COOKIE, refreshToken.toString())
                 .build();
     }
 
     @GetMapping("/logout")
     public ResponseEntity<?> logout() {
         SecurityContextHolder.clearContext();
-        Map logoutCookieMap = tokenProvider.getLogoutToken();
+        Map<String, ResponseCookie> logoutCookieMap = tokenProvider.getLogoutToken();
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, logoutCookieMap.get("accessToken").toString())
+                .header(HttpHeaders.SET_COOKIE, logoutCookieMap.get("refresh").toString())
                 .build();
     }
 

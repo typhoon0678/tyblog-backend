@@ -76,7 +76,6 @@ public class MemberService {
                     .getUsername();
 
             return MemberTokenResponseDto.builder()
-                    .email(email)
                     .username(username)
                     .build();
         }
